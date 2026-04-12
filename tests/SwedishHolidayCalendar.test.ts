@@ -82,6 +82,11 @@ const holidayNameCases = [
     expected: "Nationaldagen",
   },
   {
+    name: "Pentecost name is returned",
+    date: dateAtNoon(2026, 5, 24),
+    expected: "Pingstdagen",
+  },
+  {
     name: "Non-holiday has no holiday name",
     date: dateAtNoon(2026, 3, 10),
     expected: undefined,
@@ -118,12 +123,24 @@ assert.equal(
   true,
   "isPublicHoliday should default to any holiday when no specific holiday is selected",
 );
+assert.equal(
+  calendar.isPublicHoliday(dateAtNoon(2026, 5, 24), "Pingstdagen"),
+  true,
+  "isPublicHoliday should match Pingstdagen",
+);
 
 console.log("All specific-holiday selection tests passed.");
 
 const publicHolidayObject = calendar.getPublicHoliday(dateAtNoon(2026, 1, 1));
-assert.ok(publicHolidayObject, "getPublicHoliday should return object for holiday date");
-assert.equal(publicHolidayObject?.name, "Nyårsdagen", "getPublicHoliday should include holiday name");
+assert.ok(
+  publicHolidayObject,
+  "getPublicHoliday should return object for holiday date",
+);
+assert.equal(
+  publicHolidayObject?.name,
+  "Nyårsdagen",
+  "getPublicHoliday should include holiday name",
+);
 assert.equal(
   publicHolidayObject?.date.toISOString().slice(0, 10),
   "2026-01-01",

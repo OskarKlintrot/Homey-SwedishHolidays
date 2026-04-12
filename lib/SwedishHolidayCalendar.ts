@@ -22,6 +22,11 @@ export class SwedishHolidayCalendar {
       date: this.addDays(paskdagen, 1),
       name: "Annandag påsk",
     });
+    const pingstdagen = this.getPingstdagen(paskdagen);
+    helgdagList.push({
+      date: pingstdagen,
+      name: "Pingstdagen",
+    });
     helgdagList.push({
       date: this.addDays(paskdagen, 39),
       name: "Kristi himmelsfärd",
@@ -188,6 +193,11 @@ export class SwedishHolidayCalendar {
     }
 
     throw new Error("No midsommardag found");
+  }
+
+  private getPingstdagen(paskdagen: Date): Date {
+    // Pingstdagen infaller sjunde söndagen efter påskdagen.
+    return this.addDays(paskdagen, 49);
   }
 
   private addDays(date: Date, days: number): Date {

@@ -107,6 +107,13 @@
                 }
               },
               {
+                "id": "Pingstdagen",
+                "title": {
+                  "en": "Pentecost",
+                  "sv": "Pingstdagen"
+                }
+              },
+              {
                 "id": "Kristi himmelsfärd",
                 "title": {
                   "en": "Ascension Day",
