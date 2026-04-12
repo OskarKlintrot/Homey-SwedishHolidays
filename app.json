@@ -5,16 +5,18 @@
   "compatibility": ">=12.4.0",
   "sdk": 3,
   "runtime": "nodejs",
-  "brandColor": "#167AFF",
+  "brandColor": "#006AA7",
   "platforms": [
     "local",
     "cloud"
   ],
   "name": {
-    "en": "SwedishHolidays"
+    "en": "Swedish Holidays",
+    "sv": "Svenska Helgdagar"
   },
   "description": {
-    "en": "Adds support for MyBrand devices."
+    "en": "Flow cards for Swedish holidays.",
+    "sv": "Flödeskort för svenska helgdagar."
   },
   "category": [
     "tools"
@@ -29,5 +31,164 @@
     "name": "Oskar Klintrot",
     "email": "oskar.klintrot@gmail.com"
   },
-  "support": "mailto:oskar.klintrot@gmail.com"
+  "support": "mailto:oskar.klintrot@gmail.com",
+  "flow": {
+    "conditions": [
+      {
+        "title": {
+          "en": "Is Swedish Holiday",
+          "sv": "Är svensk helgdag"
+        },
+        "titleFormatted": {
+          "en": "Is Swedish Holiday [[holiday_name]]",
+          "sv": "Är svensk helgdag [[holiday_name]]"
+        },
+        "hint": {
+          "en": "True if today is an official Swedish public holiday.",
+          "sv": "Sant om idag är en officiell svensk helgdag."
+        },
+        "args": [
+          {
+            "name": "holiday_name",
+            "type": "dropdown",
+            "required": false,
+            "title": {
+              "en": "Specific holiday",
+              "sv": "Specifik helgdag"
+            },
+            "values": [
+              {
+                "id": "Nyårsdagen",
+                "title": {
+                  "en": "New Year's Day",
+                  "sv": "Nyårsdagen"
+                }
+              },
+              {
+                "id": "Trettondedag jul",
+                "title": {
+                  "en": "Epiphany",
+                  "sv": "Trettondedag jul"
+                }
+              },
+              {
+                "id": "Första maj",
+                "title": {
+                  "en": "May Day",
+                  "sv": "Första maj"
+                }
+              },
+              {
+                "id": "Nationaldagen",
+                "title": {
+                  "en": "National Day",
+                  "sv": "Nationaldagen"
+                }
+              },
+              {
+                "id": "Långfredag",
+                "title": {
+                  "en": "Good Friday",
+                  "sv": "Långfredag"
+                }
+              },
+              {
+                "id": "Påskdagen",
+                "title": {
+                  "en": "Easter Sunday",
+                  "sv": "Påskdagen"
+                }
+              },
+              {
+                "id": "Annandag påsk",
+                "title": {
+                  "en": "Easter Monday",
+                  "sv": "Annandag påsk"
+                }
+              },
+              {
+                "id": "Kristi himmelsfärd",
+                "title": {
+                  "en": "Ascension Day",
+                  "sv": "Kristi himmelsfärd"
+                }
+              },
+              {
+                "id": "Midsommardagen",
+                "title": {
+                  "en": "Midsummer Day",
+                  "sv": "Midsommardagen"
+                }
+              },
+              {
+                "id": "Alla helgons dag",
+                "title": {
+                  "en": "All Saints' Day",
+                  "sv": "Alla helgons dag"
+                }
+              },
+              {
+                "id": "Juldagen",
+                "title": {
+                  "en": "Christmas Day",
+                  "sv": "Juldagen"
+                }
+              },
+              {
+                "id": "Annandag jul",
+                "title": {
+                  "en": "Boxing Day",
+                  "sv": "Annandag jul"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "is_swedish_holiday"
+      },
+      {
+        "title": {
+          "en": "Workday",
+          "sv": "Arbetsdag"
+        },
+        "titleFormatted": {
+          "en": "Is workday ([[include_bridge_day]] bridge days)",
+          "sv": "Är arbetsdag ([[include_bridge_day]] klämdagar)"
+        },
+        "hint": {
+          "en": "True on weekdays that are not Swedish public holidays.",
+          "sv": "Sant på vardagar som inte är svenska helgdagar."
+        },
+        "args": [
+          {
+            "name": "include_bridge_day",
+            "type": "dropdown",
+            "required": false,
+            "value": "true",
+            "title": {
+              "en": "Bridge days",
+              "sv": "Klämdagar"
+            },
+            "values": [
+              {
+                "id": "true",
+                "title": {
+                  "en": "Including",
+                  "sv": "Inkludera"
+                }
+              },
+              {
+                "id": "false",
+                "title": {
+                  "en": "Excluding",
+                  "sv": "Exkludera"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "workday"
+      }
+    ]
+  }
 }

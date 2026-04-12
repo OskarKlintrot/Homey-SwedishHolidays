@@ -4,20 +4,17 @@
   "compatibility": ">=12.4.0",
   "sdk": 3,
   "runtime": "nodejs",
-  "brandColor": "#167AFF",
-  "platforms": [
-    "local",
-    "cloud"
-  ],
+  "brandColor": "#006AA7",
+  "platforms": ["local", "cloud"],
   "name": {
-    "en": "SwedishHolidays"
+    "en": "Swedish Holidays",
+    "sv": "Svenska Helgdagar"
   },
   "description": {
-    "en": "Adds support for MyBrand devices."
+    "en": "Flow cards for Swedish holidays.",
+    "sv": "Flödeskort för svenska helgdagar."
   },
-  "category": [
-    "tools"
-  ],
+  "category": ["tools"],
   "permissions": [],
   "images": {
     "small": "/assets/images/small.png",
