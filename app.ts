@@ -222,7 +222,7 @@ module.exports = class MyApp extends Homey.App {
     const holidayStatus = holidayService.isPublicHoliday(now);
     const holidayName = holidayStatus.holidayName ?? '';
     const isBridgeDay = holidayService.isKlamdag(now);
-    const isPublicHoliday = holidayStatus.isPublicHoliday;
+    const { isPublicHoliday } = holidayStatus;
     const isWorkday = holidayService.isWorkday(now, includeBridgeDay);
 
     if (holidayNameToken) {
