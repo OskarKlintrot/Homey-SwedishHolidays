@@ -1,5 +1,5 @@
-import assert from 'assert';
-import SwedishHolidayCalendarModule = require('../lib/SwedishHolidayCalendar');
+import assert from "assert";
+import SwedishHolidayCalendarModule = require("../lib/SwedishHolidayCalendar");
 
 type HolidayService = {
   isWorkday(date: Date, includeBridgeDay?: boolean): boolean;
@@ -31,32 +31,32 @@ const calendar = new SwedishHolidayCalendar();
 
 const testCases = [
   {
-    name: 'regular Monday is a workday',
+    name: "regular Monday is a workday",
     date: dateAtNoon(2026, 1, 5),
     expected: true,
   },
   {
-    name: 'Saturday is not a workday',
+    name: "Saturday is not a workday",
     date: dateAtNoon(2026, 1, 10),
     expected: false,
   },
   {
-    name: 'New Years Day is not a workday',
+    name: "New Years Day is not a workday",
     date: dateAtNoon(2026, 1, 1),
     expected: false,
   },
   {
-    name: 'Good Friday is not a workday',
+    name: "Good Friday is not a workday",
     date: dateAtNoon(2026, 4, 3),
     expected: false,
   },
   {
-    name: 'Ascension Day is not a workday',
+    name: "Ascension Day is not a workday",
     date: dateAtNoon(2026, 5, 14),
     expected: false,
   },
   {
-    name: 'Christmas Eve is not a workday',
+    name: "Christmas Eve is not a workday",
     date: dateAtNoon(2026, 12, 24),
     expected: false,
   },
@@ -66,12 +66,12 @@ const testCases = [
     expected: false,
   },
   {
-    name: 'Easter Eve is not a workday',
+    name: "Easter Eve is not a workday",
     date: dateAtNoon(2026, 4, 4),
     expected: false,
   },
   {
-    name: 'Midsummer Eve is not a workday',
+    name: "Midsummer Eve is not a workday",
     date: dateAtNoon(2026, 6, 19),
     expected: false,
   },
@@ -89,25 +89,25 @@ const holidayNameCases = [
   {
     name: "New Year's Day name is returned",
     date: dateAtNoon(2026, 1, 1),
-    expected: 'Nyårsdagen',
+    expected: "Nyårsdagen",
   },
   {
-    name: 'Good Friday name is returned',
+    name: "Good Friday name is returned",
     date: dateAtNoon(2026, 4, 3),
-    expected: 'Långfredag',
+    expected: "Långfredag",
   },
   {
-    name: 'National Day name is returned',
+    name: "National Day name is returned",
     date: dateAtNoon(2026, 6, 6),
-    expected: 'Nationaldagen',
+    expected: "Nationaldagen",
   },
   {
-    name: 'Pentecost name is returned',
+    name: "Pentecost name is returned",
     date: dateAtNoon(2026, 5, 24),
-    expected: 'Pingstdagen',
+    expected: "Pingstdagen",
   },
   {
-    name: 'Non-holiday has no holiday name',
+    name: "Non-holiday has no holiday name",
     date: dateAtNoon(2026, 3, 10),
     expected: undefined,
   },
@@ -127,66 +127,66 @@ for (const testCase of holidayNameCases) {
 }
 
 assert.strictEqual(
-  calendar.isPublicHoliday(dateAtNoon(2026, 1, 1), 'Nyårsdagen'),
+  calendar.isPublicHoliday(dateAtNoon(2026, 1, 1), "Nyårsdagen"),
   true,
-  'isPublicHoliday should match selected specific holiday',
+  "isPublicHoliday should match selected specific holiday",
 );
 assert.strictEqual(
-  calendar.isPublicHoliday(dateAtNoon(2026, 1, 1), 'Juldagen'),
+  calendar.isPublicHoliday(dateAtNoon(2026, 1, 1), "Juldagen"),
   false,
-  'isPublicHoliday should return false for non-matching selected holiday',
+  "isPublicHoliday should return false for non-matching selected holiday",
 );
 assert.strictEqual(
   calendar.isPublicHoliday(dateAtNoon(2026, 1, 1), undefined),
   true,
-  'isPublicHoliday should default to any holiday when no specific holiday is selected',
+  "isPublicHoliday should default to any holiday when no specific holiday is selected",
 );
 assert.strictEqual(
-  calendar.isPublicHoliday(dateAtNoon(2026, 5, 24), 'Pingstdagen'),
+  calendar.isPublicHoliday(dateAtNoon(2026, 5, 24), "Pingstdagen"),
   true,
-  'isPublicHoliday should match Pingstdagen',
+  "isPublicHoliday should match Pingstdagen",
 );
 
 const publicHolidayObject = calendar.getPublicHoliday(dateAtNoon(2026, 1, 1));
 assert.ok(
   publicHolidayObject,
-  'getPublicHoliday should return object for holiday date',
+  "getPublicHoliday should return object for holiday date",
 );
 assert.strictEqual(
   publicHolidayObject?.name,
-  'Nyårsdagen',
-  'getPublicHoliday should include holiday name',
+  "Nyårsdagen",
+  "getPublicHoliday should include holiday name",
 );
 assert.strictEqual(
   publicHolidayObject?.date.toISOString().slice(0, 10),
-  '2026-01-01',
-  'getPublicHoliday should include matching holiday date',
+  "2026-01-01",
+  "getPublicHoliday should include matching holiday date",
 );
 
 assert.strictEqual(
   calendar.getPublicHoliday(dateAtNoon(2026, 3, 10)),
   undefined,
-  'getPublicHoliday should return undefined for non-holiday',
+  "getPublicHoliday should return undefined for non-holiday",
 );
 
 // Kladagstest
 const kladagsCases = [
   {
-    name: 'January 2 2026 is a klamdag (sandwiched between New Years Day and weekend)',
+    name: "January 2 2026 is a klamdag (sandwiched between New Years Day and weekend)",
     date: dateAtNoon(2026, 1, 2),
     isKlamdag: true,
     isWorkdayWithKlamdagar: false,
     isWorkdayWithoutKlamdagar: true,
   },
   {
-    name: 'May 15 2026 is a klamdag (sandwiched between Ascension Day and weekend)',
+    name: "May 15 2026 is a klamdag (sandwiched between Ascension Day and weekend)",
     date: dateAtNoon(2026, 5, 15),
     isKlamdag: true,
     isWorkdayWithKlamdagar: false,
     isWorkdayWithoutKlamdagar: true,
   },
   {
-    name: 'regular Tuesday is not a klamdag',
+    name: "regular Tuesday is not a klamdag",
     date: dateAtNoon(2026, 3, 10),
     isKlamdag: false,
     isWorkdayWithKlamdagar: true,
@@ -226,13 +226,13 @@ const utcBoundaryCases = [
     expectedWorkday: false,
   },
   {
-    name: 'late evening on Christmas Eve UTC stays non-workday',
+    name: "late evening on Christmas Eve UTC stays non-workday",
     date: dateAtUtc(2026, 12, 24, 23, 30),
     expectedHoliday: false,
     expectedWorkday: false,
   },
   {
-    name: 'just after midnight UTC on Christmas Day is public holiday',
+    name: "just after midnight UTC on Christmas Day is public holiday",
     date: dateAtUtc(2026, 12, 25, 0, 30),
     expectedHoliday: true,
     expectedWorkday: false,
