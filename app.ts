@@ -3,6 +3,14 @@
 import Homey from "homey";
 import { SwedishHolidayCalendar } from "./lib/SwedishHolidayCalendar";
 
+type StringToken = { setValue(value: string): Promise<unknown> };
+type BooleanToken = { setValue(value: boolean): Promise<unknown> };
+type StatusTokens = {
+  isWorkdayToken?: BooleanToken;
+  isBridgeDayToken?: BooleanToken;
+  isPublicHolidayToken?: BooleanToken;
+};
+
 module.exports = class MyApp extends Homey.App {
   private midnightRefreshTimeout?: NodeJS.Timeout;
   private midnightRefreshInterval?: NodeJS.Timeout;
@@ -12,14 +20,10 @@ module.exports = class MyApp extends Homey.App {
    */
   async onInit() {
     const holidayService = new SwedishHolidayCalendar();
-    let holidayNameToken: { setValue(value: string): Promise<any> } | undefined;
-    let isWorkdayToken: { setValue(value: boolean): Promise<any> } | undefined;
-    let isBridgeDayToken:
-      | { setValue(value: boolean): Promise<any> }
-      | undefined;
-    let isPublicHolidayToken:
-      | { setValue(value: boolean): Promise<any> }
-      | undefined;
+    let holidayNameToken: StringToken | undefined;
+    let isWorkdayToken: BooleanToken | undefined;
+    let isBridgeDayToken: BooleanToken | undefined;
+    let isPublicHolidayToken: BooleanToken | undefined;
 
     try {
       holidayNameToken = await this.getOrCreateHolidayNameToken();
@@ -130,12 +134,12 @@ module.exports = class MyApp extends Homey.App {
     }
   }
 
-  private async getOrCreateHolidayNameToken() {
+  private async getOrCreateHolidayNameToken(): Promise<StringToken> {
     const tokenId = "swedish_holiday_name";
     try {
       return this.homey.flow.getToken(tokenId);
-    } catch (error: any) {
-      if (!String(error?.message ?? error).includes("token_not_registered")) {
+    } catch (error: unknown) {
+      if (!this.hasTokenError(error, "token_not_registered")) {
         throw error;
       }
     }
@@ -146,10 +150,8 @@ module.exports = class MyApp extends Homey.App {
         title: "Swedish holiday name",
         value: "",
       });
-    } catch (error: any) {
-      if (
-        String(error?.message ?? error).includes("token_already_registered")
-      ) {
+    } catch (error: unknown) {
+      if (this.hasTokenError(error, "token_already_registered")) {
         return this.homey.flow.getToken(tokenId);
       }
       throw error;
@@ -158,17 +160,20 @@ module.exports = class MyApp extends Homey.App {
 
   private async updateHolidayNameToken(
     holidayService: SwedishHolidayCalendar,
-    token: { setValue(value: string): Promise<any> },
+    token: StringToken,
   ) {
     const holidayName = holidayService.getPublicHolidayName(new Date()) ?? "";
     await token.setValue(holidayName);
   }
 
-  private async getOrCreateBooleanToken(tokenId: string, title: string) {
+  private async getOrCreateBooleanToken(
+    tokenId: string,
+    title: string,
+  ): Promise<BooleanToken> {
     try {
       return this.homey.flow.getToken(tokenId);
-    } catch (error: any) {
-      if (!String(error?.message ?? error).includes("token_not_registered")) {
+    } catch (error: unknown) {
+      if (!this.hasTokenError(error, "token_not_registered")) {
         throw error;
       }
     }
@@ -179,10 +184,8 @@ module.exports = class MyApp extends Homey.App {
         title,
         value: false,
       });
-    } catch (error: any) {
-      if (
-        String(error?.message ?? error).includes("token_already_registered")
-      ) {
+    } catch (error: unknown) {
+      if (this.hasTokenError(error, "token_already_registered")) {
         return this.homey.flow.getToken(tokenId);
       }
       throw error;
@@ -192,11 +195,7 @@ module.exports = class MyApp extends Homey.App {
   private async updateStatusTokens(
     holidayService: SwedishHolidayCalendar,
     includeBridgeDay: boolean,
-    tokens: {
-      isWorkdayToken?: { setValue(value: boolean): Promise<any> };
-      isBridgeDayToken?: { setValue(value: boolean): Promise<any> };
-      isPublicHolidayToken?: { setValue(value: boolean): Promise<any> };
-    },
+    tokens: StatusTokens,
   ) {
     const now = new Date();
     const isBridgeDay = holidayService.isKlamdag(now);
@@ -218,12 +217,8 @@ module.exports = class MyApp extends Homey.App {
 
   private scheduleMidnightTokenRefresh(
     holidayService: SwedishHolidayCalendar,
-    holidayNameToken: { setValue(value: string): Promise<any> } | undefined,
-    tokens: {
-      isWorkdayToken?: { setValue(value: boolean): Promise<any> };
-      isBridgeDayToken?: { setValue(value: boolean): Promise<any> };
-      isPublicHolidayToken?: { setValue(value: boolean): Promise<any> };
-    },
+    holidayNameToken: StringToken | undefined,
+    tokens: StatusTokens,
   ) {
     const refresh = async () => {
       if (holidayNameToken) {
@@ -262,5 +257,17 @@ module.exports = class MyApp extends Homey.App {
     nextMidnight.setDate(now.getDate() + 1);
     nextMidnight.setHours(0, 0, 0, 0);
     return Math.max(1000, nextMidnight.getTime() - now.getTime());
+  }
+
+  private hasTokenError(error: unknown, tokenErrorCode: string): boolean {
+    return this.getErrorMessage(error).includes(tokenErrorCode);
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (typeof error === "object" && error !== null && "message" in error) {
+      return String((error as { message: unknown }).message);
+    }
+
+    return String(error);
   }
 };
