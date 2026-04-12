@@ -1,4 +1,4 @@
-type PublicHoliday = {
+export type PublicHoliday = {
   date: Date;
   name: string;
 };
@@ -93,14 +93,13 @@ export default class SwedishHolidayCalendar {
       date: this.addDays(paskdagen, 1),
       name: 'Annandag påsk',
     });
-    const pingstdagen = this.getPingstdagen(paskdagen);
-    helgdagList.push({
-      date: pingstdagen,
-      name: 'Pingstdagen',
-    });
     helgdagList.push({
       date: this.addDays(paskdagen, 39),
       name: 'Kristi himmelsfärd',
+    });
+    helgdagList.push({
+      date: this.getPingstdagen(paskdagen),
+      name: 'Pingstdagen',
     });
 
     helgdagList.push({
@@ -118,7 +117,7 @@ export default class SwedishHolidayCalendar {
       name: 'Annandag jul',
     });
 
-    return helgdagList;
+    return helgdagList.sort((a, b) => a.date.getTime() - b.date.getTime());
   }
 
   private isNonWorkday(date: Date): boolean {
@@ -141,15 +140,7 @@ export default class SwedishHolidayCalendar {
       return true;
     }
 
-    // Påskafton = dagen före påskdagen (lördag)
-    const paskdagen = this.paskdagen(date.getUTCFullYear());
-    const paskafton = this.addDays(paskdagen, -1);
-    if (this.isSameUtcDate(paskafton, date)) {
-      // Påskafton
-      return true;
-    }
-
-    // Midsommarafton = fredagen före midsommardagen (lördag)
+    // Midsommarafton = fredagen före midsommardagen
     const midsommardag = this.getMidsommardag(date.getUTCFullYear());
     const midsommarafton = this.addDays(midsommardag, -1);
     if (this.isSameUtcDate(midsommarafton, date)) {
