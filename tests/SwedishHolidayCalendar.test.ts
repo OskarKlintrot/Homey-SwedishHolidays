@@ -18,14 +18,21 @@ function dateAtNoon(year: number, month: number, day: number): Date {
   return new Date(year, month - 1, day, 12, 0, 0, 0);
 }
 
-function dateAtUtc(
+function dateAtLocalTime(
   year: number,
   month: number,
   day: number,
   hour: number,
   minute: number,
 ): Date {
-  return new Date(Date.UTC(year, month - 1, day, hour, minute, 0, 0));
+  return new Date(year, month - 1, day, hour, minute, 0, 0);
+}
+
+function formatLocalDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 const calendar = new SwedishHolidayCalendar();
@@ -164,7 +171,7 @@ assert.strictEqual(
   'getPublicHoliday should include holiday name',
 );
 assert.strictEqual(
-  publicHolidayObject?.date.toISOString().slice(0, 10),
+  formatLocalDate(publicHolidayObject!.date),
   '2026-01-01',
   'getPublicHoliday should include matching holiday date',
 );
@@ -218,43 +225,49 @@ for (const testCase of bridgeDayCases) {
   );
 }
 
-const utcBoundaryCases = [
+const localBoundaryCases = [
   {
-    name: "just before New Year's Day UTC is not New Year's Day",
-    date: dateAtUtc(2025, 12, 31, 23, 59),
+    name: '23:59 on Dec 31 is not New Years Day (still previous year)',
+    date: dateAtLocalTime(2025, 12, 31, 23, 59),
     expectedHoliday: false,
     expectedWorkday: false,
   },
   {
-    name: "just after New Year's Day UTC is New Year's Day",
-    date: dateAtUtc(2026, 1, 1, 0, 1),
+    name: '00:01 on Jan 1 is New Years Day',
+    date: dateAtLocalTime(2026, 1, 1, 0, 1),
     expectedHoliday: true,
     expectedWorkday: false,
   },
   {
-    name: 'late evening on Christmas Eve UTC stays non-workday',
-    date: dateAtUtc(2026, 12, 24, 23, 30),
+    name: '23:30 on Christmas Eve is not a public holiday but non-workday',
+    date: dateAtLocalTime(2026, 12, 24, 23, 30),
     expectedHoliday: false,
     expectedWorkday: false,
   },
   {
-    name: 'just after midnight UTC on Christmas Day is public holiday',
-    date: dateAtUtc(2026, 12, 25, 0, 30),
+    name: '00:30 on Christmas Day is a public holiday',
+    date: dateAtLocalTime(2026, 12, 25, 0, 30),
     expectedHoliday: true,
     expectedWorkday: false,
+  },
+  {
+    name: 'midnight on a regular Monday is a workday',
+    date: dateAtLocalTime(2026, 1, 12, 0, 0),
+    expectedHoliday: false,
+    expectedWorkday: true,
   },
 ];
 
-for (const testCase of utcBoundaryCases) {
+for (const testCase of localBoundaryCases) {
   assert.strictEqual(
     calendar.isPublicHoliday(testCase.date),
     testCase.expectedHoliday,
-    `UTC boundary holiday: ${testCase.name}`,
+    `Local boundary holiday: ${testCase.name}`,
   );
   assert.strictEqual(
     calendar.isWorkday(testCase.date, true),
     testCase.expectedWorkday,
-    `UTC boundary workday: ${testCase.name}`,
+    `Local boundary workday: ${testCase.name}`,
   );
 }
 
@@ -312,7 +325,7 @@ for (const [year, month, day] of easterDates) {
   const easter = holidays.find((h: { name: string }) => h.name === 'Påskdagen');
   assert.ok(easter, `Påskdagen should exist for ${year}`);
   assert.strictEqual(
-    easter.date.toISOString().slice(0, 10),
+    formatLocalDate(easter.date),
     expected,
     `Påskdagen ${year} should be ${expected}`,
   );
@@ -333,7 +346,7 @@ for (const [year, month, day] of midsommarDates) {
   const midsommar = holidays.find((h: { name: string }) => h.name === 'Midsommardagen');
   assert.ok(midsommar, `Midsommardagen should exist for ${year}`);
   assert.strictEqual(
-    midsommar.date.toISOString().slice(0, 10),
+    formatLocalDate(midsommar.date),
     expected,
     `Midsommardagen ${year} should be ${expected}`,
   );
@@ -354,7 +367,7 @@ for (const [year, month, day] of allaHelgonDates) {
   const allaHelgon = holidays.find((h: { name: string }) => h.name === 'Alla helgons dag');
   assert.ok(allaHelgon, `Alla helgons dag should exist for ${year}`);
   assert.strictEqual(
-    allaHelgon.date.toISOString().slice(0, 10),
+    formatLocalDate(allaHelgon.date),
     expected,
     `Alla helgons dag ${year} should be ${expected}`,
   );

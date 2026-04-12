@@ -25,8 +25,8 @@ export default class SwedishHolidayCalendar {
   }
 
   public getPublicHoliday(date: Date): PublicHoliday | undefined {
-    const holidays = this.getPublicHolidaysForYear(date.getUTCFullYear());
-    const holiday = holidays.find((item) => this.isSameUtcDate(item.date, date));
+    const holidays = this.getPublicHolidaysForYear(date.getFullYear());
+    const holiday = holidays.find((item) => this.isSameLocalDate(item.date, date));
     if (!holiday) {
       return undefined;
     }
@@ -80,13 +80,13 @@ export default class SwedishHolidayCalendar {
 
     const paskdagen = this.paskdagen(year);
 
-    helgdagList.push({ date: this.utcDate(year, 1, 1), name: 'Nyårsdagen' });
+    helgdagList.push({ date: this.localDate(year, 1, 1), name: 'Nyårsdagen' });
     helgdagList.push({
-      date: this.utcDate(year, 1, 6),
+      date: this.localDate(year, 1, 6),
       name: 'Trettondedag jul',
     });
-    helgdagList.push({ date: this.utcDate(year, 5, 1), name: 'Första maj' });
-    helgdagList.push({ date: this.utcDate(year, 6, 6), name: 'Nationaldagen' });
+    helgdagList.push({ date: this.localDate(year, 5, 1), name: 'Första maj' });
+    helgdagList.push({ date: this.localDate(year, 6, 6), name: 'Nationaldagen' });
     helgdagList.push({ date: this.addDays(paskdagen, -2), name: 'Långfredag' });
     helgdagList.push({ date: paskdagen, name: 'Påskdagen' });
     helgdagList.push({
@@ -111,9 +111,9 @@ export default class SwedishHolidayCalendar {
       name: 'Alla helgons dag',
     });
 
-    helgdagList.push({ date: this.utcDate(year, 12, 25), name: 'Juldagen' });
+    helgdagList.push({ date: this.localDate(year, 12, 25), name: 'Juldagen' });
     helgdagList.push({
-      date: this.utcDate(year, 12, 26),
+      date: this.localDate(year, 12, 26),
       name: 'Annandag jul',
     });
 
@@ -121,13 +121,13 @@ export default class SwedishHolidayCalendar {
   }
 
   private isNonWorkday(date: Date): boolean {
-    const dayOfWeek = date.getUTCDay();
+    const dayOfWeek = date.getDay();
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       return true;
     }
 
-    const month = date.getUTCMonth();
-    const day = date.getUTCDate();
+    const month = date.getMonth();
+    const day = date.getDate();
 
     // Följande dagar är inte officiella röda dagar, men behandlas ofta som arbetsfria.
     if (month === 11 && day === 24) {
@@ -141,9 +141,9 @@ export default class SwedishHolidayCalendar {
     }
 
     // Midsommarafton = fredagen före midsommardagen
-    const midsommardag = this.getMidsommardag(date.getUTCFullYear());
+    const midsommardag = this.getMidsommardag(date.getFullYear());
     const midsommarafton = this.addDays(midsommardag, -1);
-    if (this.isSameUtcDate(midsommarafton, date)) {
+    if (this.isSameLocalDate(midsommarafton, date)) {
       // Midsommarafton
       return true;
     }
@@ -165,32 +165,32 @@ export default class SwedishHolidayCalendar {
     const e = (2 * b + 4 * c + 6 * d + n) % 7;
 
     if (d === 29 && e === 6) {
-      return this.utcDate(ar, 4, 19);
+      return this.localDate(ar, 4, 19);
     }
 
     if (d === 28 && e === 6 && (11 * m + 11) % 30 < 19) {
-      return this.utcDate(ar, 4, 18);
+      return this.localDate(ar, 4, 18);
     }
 
     if (22 + d + e <= 31) {
-      return this.utcDate(ar, 3, 22 + d + e);
+      return this.localDate(ar, 3, 22 + d + e);
     }
 
-    return this.utcDate(ar, 4, d + e - 9);
+    return this.localDate(ar, 4, d + e - 9);
   }
 
   private getMidsommardag(year: number): Date {
-    return this.findFirstSaturday(this.utcDate(year, 6, 20));
+    return this.findFirstSaturday(this.localDate(year, 6, 20));
   }
 
   private getAllaHelgonsDag(year: number): Date {
-    return this.findFirstSaturday(this.utcDate(year, 10, 31));
+    return this.findFirstSaturday(this.localDate(year, 10, 31));
   }
 
   private findFirstSaturday(startDate: Date): Date {
     for (let offset = 0; offset <= 6; offset++) {
       const candidate = this.addDays(startDate, offset);
-      if (candidate.getUTCDay() === 6) {
+      if (candidate.getDay() === 6) {
         return candidate;
       }
     }
@@ -205,19 +205,19 @@ export default class SwedishHolidayCalendar {
 
   private addDays(date: Date, days: number): Date {
     const copy = new Date(date.getTime());
-    copy.setUTCDate(copy.getUTCDate() + days);
+    copy.setDate(copy.getDate() + days);
     return copy;
   }
 
-  private utcDate(year: number, month: number, day: number): Date {
-    return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  private localDate(year: number, month: number, day: number): Date {
+    return new Date(year, month - 1, day, 0, 0, 0, 0);
   }
 
-  private isSameUtcDate(a: Date, b: Date): boolean {
+  private isSameLocalDate(a: Date, b: Date): boolean {
     return (
-      a.getUTCFullYear() === b.getUTCFullYear()
-      && a.getUTCMonth() === b.getUTCMonth()
-      && a.getUTCDate() === b.getUTCDate()
+      a.getFullYear() === b.getFullYear()
+      && a.getMonth() === b.getMonth()
+      && a.getDate() === b.getDate()
     );
   }
 
