@@ -3,16 +3,28 @@ import SwedishHolidayCalendarModule = require('../lib/SwedishHolidayCalendar');
 
 type HolidayService = {
   isWorkday(date: Date, includeBridgeDay?: boolean): boolean;
-  getPublicHolidayName(date: Date): string | undefined;
-  isPublicHoliday(date: Date, holidayName?: string): boolean;
-  getPublicHoliday(date: Date): { date: Date; name: string } | undefined;
-  getPublicHolidays(year: number): { date: Date; name: string }[];
+  isPublicHoliday(date: Date, holidayName?: string): {
+    isPublicHoliday: boolean;
+    holidayName?: string;
+  };
   isKlamdag(date: Date): boolean;
 };
 
 const SwedishHolidayCalendar = SwedishHolidayCalendarModule.default as {
   new (): HolidayService;
 };
+
+function isPublicHoliday(
+  calendar: HolidayService,
+  date: Date,
+  holidayName?: string,
+): boolean {
+  return calendar.isPublicHoliday(date, holidayName).isPublicHoliday;
+}
+
+function getPublicHolidayName(calendar: HolidayService, date: Date): string | undefined {
+  return calendar.isPublicHoliday(date).holidayName;
+}
 
 function dateAtNoon(year: number, month: number, day: number): Date {
   return new Date(year, month - 1, day, 12, 0, 0, 0);
@@ -128,58 +140,54 @@ const holidayNameCases = [
 
 for (const testCase of holidayNameCases) {
   assert.strictEqual(
-    calendar.getPublicHolidayName(testCase.date),
-    testCase.expected,
-    `getPublicHolidayName: ${testCase.name}`,
-  );
-  assert.strictEqual(
-    calendar.isPublicHoliday(testCase.date),
+    isPublicHoliday(calendar, testCase.date),
     testCase.expected !== undefined,
     `isPublicHoliday: ${testCase.name}`,
   );
+  if (testCase.expected) {
+    assert.strictEqual(
+      isPublicHoliday(calendar, testCase.date, testCase.expected),
+      true,
+      `isPublicHoliday(date, holidayName): ${testCase.name}`,
+    );
+    assert.strictEqual(
+      getPublicHolidayName(calendar, testCase.date),
+      testCase.expected,
+      `holidayName: ${testCase.name}`,
+    );
+  }
 }
 
 assert.strictEqual(
-  calendar.isPublicHoliday(dateAtNoon(2026, 1, 1), 'Nyårsdagen'),
+  isPublicHoliday(calendar, dateAtNoon(2026, 1, 1), 'Nyårsdagen'),
   true,
   'isPublicHoliday should match selected specific holiday',
 );
 assert.strictEqual(
-  calendar.isPublicHoliday(dateAtNoon(2026, 1, 1), 'Juldagen'),
+  isPublicHoliday(calendar, dateAtNoon(2026, 1, 1), 'Juldagen'),
   false,
   'isPublicHoliday should return false for non-matching selected holiday',
 );
 assert.strictEqual(
-  calendar.isPublicHoliday(dateAtNoon(2026, 1, 1), undefined),
+  isPublicHoliday(calendar, dateAtNoon(2026, 1, 1), undefined),
   true,
   'isPublicHoliday should default to any holiday when no specific holiday is selected',
 );
 assert.strictEqual(
-  calendar.isPublicHoliday(dateAtNoon(2026, 5, 24), 'Pingstdagen'),
+  isPublicHoliday(calendar, dateAtNoon(2026, 5, 24), 'Pingstdagen'),
   true,
   'isPublicHoliday should match Pingstdagen',
 );
 
-const publicHolidayObject = calendar.getPublicHoliday(dateAtNoon(2026, 1, 1));
-assert.ok(
-  publicHolidayObject,
-  'getPublicHoliday should return object for holiday date',
+assert.strictEqual(
+  isPublicHoliday(calendar, dateAtNoon(2026, 1, 1), 'Nyårsdagen'),
+  true,
+  'isPublicHoliday should match specific holiday on holiday date',
 );
 assert.strictEqual(
-  publicHolidayObject?.name,
-  'Nyårsdagen',
-  'getPublicHoliday should include holiday name',
-);
-assert.strictEqual(
-  formatLocalDate(publicHolidayObject!.date),
-  '2026-01-01',
-  'getPublicHoliday should include matching holiday date',
-);
-
-assert.strictEqual(
-  calendar.getPublicHoliday(dateAtNoon(2026, 3, 10)),
-  undefined,
-  'getPublicHoliday should return undefined for non-holiday',
+  isPublicHoliday(calendar, dateAtNoon(2026, 3, 10), 'Nyårsdagen'),
+  false,
+  'isPublicHoliday should return false for specific holiday on non-holiday date',
 );
 
 // Klämdagstest
@@ -260,7 +268,7 @@ const localBoundaryCases = [
 
 for (const testCase of localBoundaryCases) {
   assert.strictEqual(
-    calendar.isPublicHoliday(testCase.date),
+    isPublicHoliday(calendar, testCase.date),
     testCase.expectedHoliday,
     `Local boundary holiday: ${testCase.name}`,
   );
@@ -271,40 +279,39 @@ for (const testCase of localBoundaryCases) {
   );
 }
 
-// getPublicHolidays: completeness and chronological order
-const holidays2026 = calendar.getPublicHolidays(2026);
-assert.strictEqual(
-  holidays2026.length,
-  13,
-  'getPublicHolidays should return 13 holidays for 2026',
-);
+// Explicit date checks for all Swedish public holidays in 2026
+const expectedHolidays2026 = [
+  [2026, 1, 1, 'Nyårsdagen'],
+  [2026, 1, 6, 'Trettondedag jul'],
+  [2026, 4, 3, 'Långfredag'],
+  [2026, 4, 5, 'Påskdagen'],
+  [2026, 4, 6, 'Annandag påsk'],
+  [2026, 5, 1, 'Första maj'],
+  [2026, 5, 14, 'Kristi himmelsfärd'],
+  [2026, 5, 24, 'Pingstdagen'],
+  [2026, 6, 6, 'Nationaldagen'],
+  [2026, 6, 20, 'Midsommardagen'],
+  [2026, 10, 31, 'Alla helgons dag'],
+  [2026, 12, 25, 'Juldagen'],
+  [2026, 12, 26, 'Annandag jul'],
+] as const;
 
-const holidayNames2026 = holidays2026.map((h: { name: string }) => h.name);
-const expectedNames = [
-  'Nyårsdagen',
-  'Trettondedag jul',
-  'Långfredag',
-  'Påskdagen',
-  'Annandag påsk',
-  'Första maj',
-  'Kristi himmelsfärd',
-  'Pingstdagen',
-  'Nationaldagen',
-  'Midsommardagen',
-  'Alla helgons dag',
-  'Juldagen',
-  'Annandag jul',
-];
-assert.deepStrictEqual(
-  holidayNames2026,
-  expectedNames,
-  'getPublicHolidays should return all holidays in chronological order',
-);
-
-for (let i = 1; i < holidays2026.length; i++) {
-  assert.ok(
-    holidays2026[i].date.getTime() >= holidays2026[i - 1].date.getTime(),
-    `Holiday ${holidays2026[i].name} should come after ${holidays2026[i - 1].name}`,
+for (const [year, month, day, name] of expectedHolidays2026) {
+  const date = dateAtNoon(year, month, day);
+  assert.strictEqual(
+    isPublicHoliday(calendar, date),
+    true,
+    `${name} should be a public holiday`,
+  );
+  assert.strictEqual(
+    isPublicHoliday(calendar, date, name),
+    true,
+    `${name} should match by specific holiday name`,
+  );
+  assert.strictEqual(
+    getPublicHolidayName(calendar, date),
+    name,
+    `${name} should be returned as holiday name`,
   );
 }
 
@@ -321,13 +328,17 @@ const easterDates: [number, number, number][] = [
 
 for (const [year, month, day] of easterDates) {
   const expected = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  const holidays = calendar.getPublicHolidays(year);
-  const easter = holidays.find((h: { name: string }) => h.name === 'Påskdagen');
-  assert.ok(easter, `Påskdagen should exist for ${year}`);
+  const easter = dateAtNoon(year, month, day);
+  assert.strictEqual(isPublicHoliday(calendar, easter), true, `Påskdagen should exist for ${year}`);
   assert.strictEqual(
-    formatLocalDate(easter.date),
+    formatLocalDate(easter),
     expected,
     `Påskdagen ${year} should be ${expected}`,
+  );
+  assert.strictEqual(
+    isPublicHoliday(calendar, easter, 'Påskdagen'),
+    true,
+    `Holiday should match Påskdagen for ${year}`,
   );
 }
 
@@ -342,13 +353,17 @@ const midsommarDates: [number, number, number][] = [
 
 for (const [year, month, day] of midsommarDates) {
   const expected = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  const holidays = calendar.getPublicHolidays(year);
-  const midsommar = holidays.find((h: { name: string }) => h.name === 'Midsommardagen');
-  assert.ok(midsommar, `Midsommardagen should exist for ${year}`);
+  const midsommar = dateAtNoon(year, month, day);
+  assert.strictEqual(isPublicHoliday(calendar, midsommar), true, `Midsommardagen should exist for ${year}`);
   assert.strictEqual(
-    formatLocalDate(midsommar.date),
+    formatLocalDate(midsommar),
     expected,
     `Midsommardagen ${year} should be ${expected}`,
+  );
+  assert.strictEqual(
+    isPublicHoliday(calendar, midsommar, 'Midsommardagen'),
+    true,
+    `Holiday should match Midsommardagen for ${year}`,
   );
 }
 
@@ -363,12 +378,16 @@ const allaHelgonDates: [number, number, number][] = [
 
 for (const [year, month, day] of allaHelgonDates) {
   const expected = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  const holidays = calendar.getPublicHolidays(year);
-  const allaHelgon = holidays.find((h: { name: string }) => h.name === 'Alla helgons dag');
-  assert.ok(allaHelgon, `Alla helgons dag should exist for ${year}`);
+  const allaHelgon = dateAtNoon(year, month, day);
+  assert.strictEqual(isPublicHoliday(calendar, allaHelgon), true, `Alla helgons dag should exist for ${year}`);
   assert.strictEqual(
-    formatLocalDate(allaHelgon.date),
+    formatLocalDate(allaHelgon),
     expected,
     `Alla helgons dag ${year} should be ${expected}`,
+  );
+  assert.strictEqual(
+    isPublicHoliday(calendar, allaHelgon, 'Alla helgons dag'),
+    true,
+    `Holiday should match Alla helgons dag for ${year}`,
   );
 }

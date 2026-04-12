@@ -4,8 +4,10 @@ import Homey from 'homey';
 import SwedishHolidayCalendarModule = require('./lib/SwedishHolidayCalendar');
 
 type HolidayService = {
-  getPublicHolidayName(date: Date): string | undefined;
-  isPublicHoliday(date: Date, holidayName?: string): boolean;
+  isPublicHoliday(date: Date, holidayName?: string): {
+    isPublicHoliday: boolean;
+    holidayName?: string;
+  };
   isWorkday(date: Date, includeBridgeDay?: boolean): boolean;
   isKlamdag(date: Date): boolean;
 };
@@ -101,7 +103,9 @@ module.exports = class MyApp extends Homey.App {
           'during condition run',
         );
 
-        return holidayService.isPublicHoliday(new Date(), args['holiday_name']);
+        return holidayService
+          .isPublicHoliday(new Date(), args['holiday_name'])
+          .isPublicHoliday;
       },
     );
 
@@ -160,14 +164,6 @@ module.exports = class MyApp extends Homey.App {
     }
   }
 
-  private async updateHolidayNameToken(
-    holidayService: HolidayService,
-    token: StringToken,
-  ) {
-    const holidayName = holidayService.getPublicHolidayName(new Date()) ?? '';
-    await token.setValue(holidayName);
-  }
-
   private async getOrCreateBooleanToken(
     tokenId: string,
     title: string,
@@ -201,21 +197,13 @@ module.exports = class MyApp extends Homey.App {
     tokens: StatusTokens,
     contextLabel: string,
   ) {
-    if (holidayNameToken) {
-      await this.updateHolidayNameToken(holidayService, holidayNameToken).catch(
-        (error) => this.error(
-          `Failed to update holiday name token ${contextLabel}`,
-          error,
-        ),
-      );
-    }
-
     await this.updateStatusTokens(
       holidayService,
       includeBridgeDay,
+      holidayNameToken,
       tokens,
     ).catch((error) => this.error(
-      `Failed to update boolean status tokens ${contextLabel}`,
+      `Failed to update status tokens ${contextLabel}`,
       error,
     ));
   }
@@ -227,12 +215,19 @@ module.exports = class MyApp extends Homey.App {
   private async updateStatusTokens(
     holidayService: HolidayService,
     includeBridgeDay: boolean,
+    holidayNameToken: StringToken | undefined,
     tokens: StatusTokens,
   ) {
     const now = new Date();
+    const holidayStatus = holidayService.isPublicHoliday(now);
+    const holidayName = holidayStatus.holidayName ?? '';
     const isBridgeDay = holidayService.isKlamdag(now);
-    const isPublicHoliday = holidayService.isPublicHoliday(now);
+    const isPublicHoliday = holidayStatus.isPublicHoliday;
     const isWorkday = holidayService.isWorkday(now, includeBridgeDay);
+
+    if (holidayNameToken) {
+      await holidayNameToken.setValue(holidayName);
+    }
 
     if (tokens.isBridgeDayToken) {
       await tokens.isBridgeDayToken.setValue(isBridgeDay);

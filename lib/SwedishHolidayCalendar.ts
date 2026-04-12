@@ -3,42 +3,33 @@ export type PublicHoliday = {
   name: string;
 };
 
+export type PublicHolidayResult = {
+  isPublicHoliday: boolean;
+  holidayName?: string;
+};
+
 export default class SwedishHolidayCalendar {
   private readonly holidayCache = new Map<number, PublicHoliday[]>();
 
-  public getPublicHolidays(year: number): PublicHoliday[] {
-    const holidays = this.getPublicHolidaysForYear(year);
-    return this.cloneHolidayList(holidays);
-  }
-
-  public isPublicHoliday(date: Date, holidayName?: string): boolean {
-    const holiday = this.getPublicHoliday(date);
+  public isPublicHoliday(date: Date, holidayName?: string): PublicHolidayResult {
+    const holiday = this.findHoliday(date);
     if (!holiday) {
-      return false;
+      return {
+        isPublicHoliday: false,
+      };
     }
 
     if (!holidayName) {
-      return true;
-    }
-
-    return holiday.name === holidayName;
-  }
-
-  public getPublicHoliday(date: Date): PublicHoliday | undefined {
-    const holidays = this.getPublicHolidaysForYear(date.getFullYear());
-    const holiday = holidays.find((item) => this.isSameLocalDate(item.date, date));
-    if (!holiday) {
-      return undefined;
+      return {
+        isPublicHoliday: true,
+        holidayName: holiday.name,
+      };
     }
 
     return {
-      name: holiday.name,
-      date: new Date(holiday.date.getTime()),
+      isPublicHoliday: holiday.name === holidayName,
+      holidayName: holiday.name,
     };
-  }
-
-  public getPublicHolidayName(date: Date): string | undefined {
-    return this.getPublicHoliday(date)?.name;
   }
 
   public isKlamdag(date: Date): boolean {
@@ -73,6 +64,11 @@ export default class SwedishHolidayCalendar {
     const computed = this.buildPublicHolidays(year);
     this.holidayCache.set(year, computed);
     return computed;
+  }
+
+  private findHoliday(date: Date): PublicHoliday | undefined {
+    const holidays = this.getPublicHolidaysForYear(date.getFullYear());
+    return holidays.find((item) => this.isSameLocalDate(item.date, date));
   }
 
   private buildPublicHolidays(year: number): PublicHoliday[] {
@@ -148,7 +144,7 @@ export default class SwedishHolidayCalendar {
       return true;
     }
 
-    return this.isPublicHoliday(date);
+    return this.isPublicHoliday(date).isPublicHoliday;
   }
 
   // Gauss paskformel
@@ -219,12 +215,5 @@ export default class SwedishHolidayCalendar {
       && a.getMonth() === b.getMonth()
       && a.getDate() === b.getDate()
     );
-  }
-
-  private cloneHolidayList(holidays: PublicHoliday[]): PublicHoliday[] {
-    return holidays.map((holiday) => ({
-      name: holiday.name,
-      date: new Date(holiday.date.getTime()),
-    }));
   }
 }
