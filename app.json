@@ -6,7 +6,10 @@
   "sdk": 3,
   "runtime": "nodejs",
   "brandColor": "#006AA7",
-  "platforms": ["local", "cloud"],
+  "platforms": [
+    "local",
+    "cloud"
+  ],
   "name": {
     "en": "Swedish Holidays",
     "sv": "Svenska Helgdagar"
@@ -15,7 +18,9 @@
     "en": "Flow cards for Swedish holidays.",
     "sv": "Flödeskort för svenska helgdagar."
   },
-  "category": ["tools"],
+  "category": [
+    "tools"
+  ],
   "permissions": [],
   "images": {
     "small": "/assets/images/small.png",
