@@ -5,6 +5,7 @@
   "compatibility": ">=12.4.0",
   "sdk": 3,
   "runtime": "nodejs",
+  "brandColor": "#167AFF",
   "platforms": [
     "local",
     "cloud"
@@ -27,5 +28,6 @@
   "author": {
     "name": "Oskar Klintrot",
     "email": "oskar.klintrot@gmail.com"
-  }
+  },
+  "support": "mailto:oskar.klintrot@gmail.com"
 }
