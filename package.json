@@ -4,7 +4,10 @@
   "scripts": {
     "build": "tsc",
     "test": "npm run build && node .homeybuild/tests/SwedishHolidayCalendar.test.js",
-    "lint": "eslint --ext .js,.ts --ignore-path .gitignore ."
+    "format": "prettier --write .",
+    "lint:fix": "eslint --ext .js,.ts --ignore-path .gitignore . --fix",
+    "lint": "eslint --ext .js,.ts --ignore-path .gitignore .",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@tsconfig/node16": "^16.1.8",
@@ -12,6 +15,8 @@
     "@types/node": "^25.6.0",
     "eslint": "^7.32.0",
     "eslint-config-athom": "^3.1.5",
+    "husky": "^9.1.7",
+    "prettier": "^3.8.2",
     "typescript": "^6.0.2"
   }
 }

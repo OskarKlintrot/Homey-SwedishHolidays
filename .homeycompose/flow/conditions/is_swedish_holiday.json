@@ -21,19 +21,58 @@
         "sv": "Specifik helgdag"
       },
       "values": [
-        { "id": "Nyårsdagen", "title": { "en": "New Year's Day", "sv": "Nyårsdagen" } },
-        { "id": "Trettondedag jul", "title": { "en": "Epiphany", "sv": "Trettondedag jul" } },
-        { "id": "Första maj", "title": { "en": "May Day", "sv": "Första maj" } },
-        { "id": "Nationaldagen", "title": { "en": "National Day", "sv": "Nationaldagen" } },
-        { "id": "Långfredag", "title": { "en": "Good Friday", "sv": "Långfredag" } },
-        { "id": "Påskdagen", "title": { "en": "Easter Sunday", "sv": "Påskdagen" } },
-        { "id": "Annandag påsk", "title": { "en": "Easter Monday", "sv": "Annandag påsk" } },
-        { "id": "Pingstdagen", "title": { "en": "Pentecost", "sv": "Pingstdagen" } },
-        { "id": "Kristi himmelsfärd", "title": { "en": "Ascension Day", "sv": "Kristi himmelsfärd" } },
-        { "id": "Midsommardagen", "title": { "en": "Midsummer Day", "sv": "Midsommardagen" } },
-        { "id": "Alla helgons dag", "title": { "en": "All Saints' Day", "sv": "Alla helgons dag" } },
-        { "id": "Juldagen", "title": { "en": "Christmas Day", "sv": "Juldagen" } },
-        { "id": "Annandag jul", "title": { "en": "Boxing Day", "sv": "Annandag jul" } }
+        {
+          "id": "Nyårsdagen",
+          "title": { "en": "New Year's Day", "sv": "Nyårsdagen" }
+        },
+        {
+          "id": "Trettondedag jul",
+          "title": { "en": "Epiphany", "sv": "Trettondedag jul" }
+        },
+        {
+          "id": "Första maj",
+          "title": { "en": "May Day", "sv": "Första maj" }
+        },
+        {
+          "id": "Nationaldagen",
+          "title": { "en": "National Day", "sv": "Nationaldagen" }
+        },
+        {
+          "id": "Långfredag",
+          "title": { "en": "Good Friday", "sv": "Långfredag" }
+        },
+        {
+          "id": "Påskdagen",
+          "title": { "en": "Easter Sunday", "sv": "Påskdagen" }
+        },
+        {
+          "id": "Annandag påsk",
+          "title": { "en": "Easter Monday", "sv": "Annandag påsk" }
+        },
+        {
+          "id": "Pingstdagen",
+          "title": { "en": "Pentecost", "sv": "Pingstdagen" }
+        },
+        {
+          "id": "Kristi himmelsfärd",
+          "title": { "en": "Ascension Day", "sv": "Kristi himmelsfärd" }
+        },
+        {
+          "id": "Midsommardagen",
+          "title": { "en": "Midsummer Day", "sv": "Midsommardagen" }
+        },
+        {
+          "id": "Alla helgons dag",
+          "title": { "en": "All Saints' Day", "sv": "Alla helgons dag" }
+        },
+        {
+          "id": "Juldagen",
+          "title": { "en": "Christmas Day", "sv": "Juldagen" }
+        },
+        {
+          "id": "Annandag jul",
+          "title": { "en": "Boxing Day", "sv": "Annandag jul" }
+        }
       ]
     }
   ]
