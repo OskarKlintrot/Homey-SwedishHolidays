@@ -8,10 +8,64 @@ export type PublicHolidayResult = {
   holidayName?: string;
 };
 
+export type CalendarDayKind = 'holiday' | 'bridge' | 'otherNonWorkday';
+
+export type CalendarDay = {
+  date: Date;
+  name: string;
+  kind: CalendarDayKind;
+};
+
 export default class SwedishHolidayCalendar {
   private readonly holidayCache = new Map<number, PublicHoliday[]>();
 
-  public isPublicHoliday(date: Date, holidayName?: string): PublicHolidayResult {
+  public getCalendarDaysForYear(year: number): CalendarDay[] {
+    const days: CalendarDay[] = this.getPublicHolidaysForYear(year).map(
+      (holiday) => ({
+        date: holiday.date,
+        name: holiday.name,
+        kind: 'holiday',
+      }),
+    );
+
+    const firstDate = this.localDate(year, 1, 1);
+    const lastDate = this.localDate(year, 12, 31);
+
+    for (
+      let date = new Date(firstDate.getTime());
+      date <= lastDate;
+      date = this.addDays(date, 1)
+    ) {
+      if (this.isPublicHoliday(date).isPublicHoliday) {
+        continue;
+      }
+
+      if (this.isKlamdag(date)) {
+        days.push({
+          date: new Date(date.getTime()),
+          name: 'Klämdag',
+          kind: 'bridge',
+        });
+        continue;
+      }
+
+      const otherNonWorkdayName = this.getOtherNonWorkdayName(date);
+      if (otherNonWorkdayName) {
+        days.push({
+          date: new Date(date.getTime()),
+          name: otherNonWorkdayName,
+          kind: 'otherNonWorkday',
+        });
+      }
+    }
+
+    return days.sort((a, b) => a.date.getTime() - b.date.getTime());
+  }
+
+  public isPublicHoliday(
+    date: Date,
+    holidayName?: string,
+  ): PublicHolidayResult {
     const holiday = this.findHoliday(date);
     if (!holiday) {
       return {
@@ -82,7 +136,10 @@ export default class SwedishHolidayCalendar {
       name: 'Trettondedag jul',
     });
     helgdagList.push({ date: this.localDate(year, 5, 1), name: 'Första maj' });
-    helgdagList.push({ date: this.localDate(year, 6, 6), name: 'Nationaldagen' });
+    helgdagList.push({
+      date: this.localDate(year, 6, 6),
+      name: 'Nationaldagen',
+    });
     helgdagList.push({ date: this.addDays(paskdagen, -2), name: 'Långfredag' });
     helgdagList.push({ date: paskdagen, name: 'Påskdagen' });
     helgdagList.push({
@@ -122,29 +179,34 @@ export default class SwedishHolidayCalendar {
       return true;
     }
 
+    if (this.getOtherNonWorkdayName(date)) {
+      return true;
+    }
+
+    return this.isPublicHoliday(date).isPublicHoliday;
+  }
+
+  private getOtherNonWorkdayName(date: Date): string | undefined {
     const month = date.getMonth();
     const day = date.getDate();
 
     // Följande dagar är inte officiella röda dagar, men behandlas ofta som arbetsfria.
     if (month === 11 && day === 24) {
-      // Julafton
-      return true;
+      return 'Julafton';
     }
 
     if (month === 11 && day === 31) {
-      // Nyårsafton
-      return true;
+      return 'Nyårsafton';
     }
 
     // Midsommarafton = fredagen före midsommardagen
     const midsommardag = this.getMidsommardag(date.getFullYear());
     const midsommarafton = this.addDays(midsommardag, -1);
     if (this.isSameLocalDate(midsommarafton, date)) {
-      // Midsommarafton
-      return true;
+      return 'Midsommarafton';
     }
 
-    return this.isPublicHoliday(date).isPublicHoliday;
+    return undefined;
   }
 
   // Gauss paskformel

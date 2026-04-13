@@ -21,6 +21,12 @@
   "category": [
     "tools"
   ],
+  "api": {
+    "getCalendarDays": {
+      "method": "GET",
+      "path": "/calendar"
+    }
+  },
   "permissions": [],
   "images": {
     "small": "/assets/images/small.png",

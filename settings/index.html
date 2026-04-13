@@ -1,0 +1,157 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script
+      type="text/javascript"
+      src="/homey.js"
+      data-origin="settings"
+    ></script>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      .holiday-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .holiday-table th,
+      .holiday-table td {
+        text-align: left;
+        padding: 8px 10px;
+      }
+
+      .holiday-table thead th {
+        border-bottom: 1px solid var(--homey-line-color, #d8d8d8);
+      }
+
+      .holiday-table tbody tr:not(:last-child) td {
+        border-bottom: 1px solid var(--homey-line-color, #efefef);
+      }
+
+      .holiday-table tbody tr.bridge-day td {
+        background: #fff6bf;
+      }
+
+      .holiday-table tbody tr.other-non-workday td {
+        background: #e1f7dc;
+      }
+
+      .holiday-year {
+        margin-top: 4px;
+      }
+
+      .generated-note {
+        margin-top: 12px;
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="homey-header">
+      <h1 class="homey-title" data-i18n="settings.title"></h1>
+      <p class="homey-subtitle" data-i18n="settings.subtitle"></p>
+      <p class="homey-subtitle holiday-year" id="year-line"></p>
+    </header>
+
+    <fieldset class="homey-form-fieldset">
+      <legend class="homey-form-legend" data-i18n="settings.title"></legend>
+      <div class="table-wrap">
+        <table class="holiday-table">
+          <thead>
+            <tr>
+              <th data-i18n="settings.holiday"></th>
+              <th data-i18n="settings.date"></th>
+              <th data-i18n="settings.weekday"></th>
+            </tr>
+          </thead>
+          <tbody id="holiday-rows"></tbody>
+        </table>
+      </div>
+      <p
+        class="homey-form-label generated-note"
+        data-i18n="settings.generated"
+      ></p>
+    </fieldset>
+
+    <script type="text/javascript">
+      function parseISODate(isoDate) {
+        var parts = isoDate.split("-").map(function (part) {
+          return Number(part);
+        });
+        return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0, 0);
+      }
+
+      function renderHolidayRows(days, locale) {
+        var body = document.getElementById("holiday-rows");
+        body.innerHTML = "";
+
+        var weekdayFormatter = new Intl.DateTimeFormat(locale, {
+          weekday: "long",
+        });
+
+        days.forEach(function (day) {
+          var row = document.createElement("tr");
+          if (day.kind === "bridge") {
+            row.className = "bridge-day";
+          } else if (day.kind === "otherNonWorkday") {
+            row.className = "other-non-workday";
+          } else {
+            row.className = "public-holiday";
+          }
+
+          var holidayCell = document.createElement("td");
+          holidayCell.textContent = day.name;
+
+          var dateCell = document.createElement("td");
+          dateCell.textContent = day.date;
+
+          var weekdayCell = document.createElement("td");
+          weekdayCell.textContent = weekdayFormatter.format(
+            parseISODate(day.date),
+          );
+
+          row.appendChild(holidayCell);
+          row.appendChild(dateCell);
+          row.appendChild(weekdayCell);
+          body.appendChild(row);
+        });
+      }
+
+      function setRowsFromApi(Homey, locale) {
+        Homey.api("GET", "/calendar", null, function (error, result) {
+          if (error) {
+            Homey.alert(error.message || String(error));
+            Homey.ready();
+            return;
+          }
+
+          var yearLine = document.getElementById("year-line");
+          yearLine.textContent = Homey.__("settings.year") + ": " + result.year;
+
+          renderHolidayRows(result.days, locale);
+          Homey.ready();
+        });
+      }
+
+      function onHomeyReady(Homey) {
+        var locale = navigator.language || "en-GB";
+        setRowsFromApi(
+          Homey,
+          locale.toLowerCase().startsWith("sv") ? "sv-SE" : "en-GB",
+        );
+      }
+    </script>
+  </body>
+</html>

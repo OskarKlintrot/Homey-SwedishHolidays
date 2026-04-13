@@ -1,0 +1,11 @@
+{
+  "settings": {
+    "title": "Svenska helgdagar",
+    "subtitle": "Översikt över officiella svenska helgdagar för innevarande år.",
+    "year": "År",
+    "holiday": "Helgdag",
+    "date": "Datum",
+    "weekday": "Veckodag",
+    "generated": "Genererad utifrån innevarande år i Homeys tidszon."
+  }
+}

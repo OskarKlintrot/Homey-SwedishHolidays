@@ -3,11 +3,19 @@ import SwedishHolidayCalendarModule = require('../lib/SwedishHolidayCalendar');
 
 type HolidayService = {
   isWorkday(date: Date, includeBridgeDay?: boolean): boolean;
-  isPublicHoliday(date: Date, holidayName?: string): {
+  isPublicHoliday(
+    date: Date,
+    holidayName?: string,
+  ): {
     isPublicHoliday: boolean;
     holidayName?: string;
   };
   isKlamdag(date: Date): boolean;
+  getCalendarDaysForYear(year: number): {
+    name: string;
+    date: Date;
+    kind: 'holiday' | 'bridge' | 'otherNonWorkday';
+  }[];
 };
 
 const SwedishHolidayCalendar = SwedishHolidayCalendarModule.default as {
@@ -22,7 +30,10 @@ function isPublicHoliday(
   return calendar.isPublicHoliday(date, holidayName).isPublicHoliday;
 }
 
-function getPublicHolidayName(calendar: HolidayService, date: Date): string | undefined {
+function getPublicHolidayName(
+  calendar: HolidayService,
+  date: Date,
+): string | undefined {
   return calendar.isPublicHoliday(date).holidayName;
 }
 
@@ -329,7 +340,11 @@ const easterDates: [number, number, number][] = [
 for (const [year, month, day] of easterDates) {
   const expected = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   const easter = dateAtNoon(year, month, day);
-  assert.strictEqual(isPublicHoliday(calendar, easter), true, `Påskdagen should exist for ${year}`);
+  assert.strictEqual(
+    isPublicHoliday(calendar, easter),
+    true,
+    `Påskdagen should exist for ${year}`,
+  );
   assert.strictEqual(
     formatLocalDate(easter),
     expected,
@@ -354,7 +369,11 @@ const midsommarDates: [number, number, number][] = [
 for (const [year, month, day] of midsommarDates) {
   const expected = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   const midsommar = dateAtNoon(year, month, day);
-  assert.strictEqual(isPublicHoliday(calendar, midsommar), true, `Midsommardagen should exist for ${year}`);
+  assert.strictEqual(
+    isPublicHoliday(calendar, midsommar),
+    true,
+    `Midsommardagen should exist for ${year}`,
+  );
   assert.strictEqual(
     formatLocalDate(midsommar),
     expected,
@@ -379,7 +398,11 @@ const allaHelgonDates: [number, number, number][] = [
 for (const [year, month, day] of allaHelgonDates) {
   const expected = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   const allaHelgon = dateAtNoon(year, month, day);
-  assert.strictEqual(isPublicHoliday(calendar, allaHelgon), true, `Alla helgons dag should exist for ${year}`);
+  assert.strictEqual(
+    isPublicHoliday(calendar, allaHelgon),
+    true,
+    `Alla helgons dag should exist for ${year}`,
+  );
   assert.strictEqual(
     formatLocalDate(allaHelgon),
     expected,
@@ -390,4 +413,75 @@ for (const [year, month, day] of allaHelgonDates) {
     true,
     `Holiday should match Alla helgons dag for ${year}`,
   );
+}
+
+// Shared calendar days list (used by settings and should match flow behavior)
+const calendarDays2026 = calendar.getCalendarDaysForYear(2026);
+
+assert.ok(calendarDays2026.length > 0, 'calendar day list should not be empty');
+
+for (let i = 1; i < calendarDays2026.length; i++) {
+  assert.ok(
+    calendarDays2026[i - 1].date.getTime()
+      <= calendarDays2026[i].date.getTime(),
+    'calendar day list should be sorted by date',
+  );
+}
+
+const byKey2026 = new Map<
+  string,
+  { name: string; kind: 'holiday' | 'bridge' | 'otherNonWorkday' }
+>();
+for (const item of calendarDays2026) {
+  byKey2026.set(formatLocalDate(item.date), {
+    name: item.name,
+    kind: item.kind,
+  });
+}
+
+for (const [year, month, day, holidayName] of expectedHolidays2026) {
+  const key = formatLocalDate(dateAtNoon(year, month, day));
+  const item = byKey2026.get(key);
+  assert.ok(item, `calendar list should include ${holidayName}`);
+  assert.strictEqual(
+    item?.kind,
+    'holiday',
+    `${holidayName} should have kind=holiday`,
+  );
+  assert.strictEqual(
+    item?.name,
+    holidayName,
+    `${holidayName} should keep the expected name`,
+  );
+}
+
+const expectedBridges2026 = [
+  [2026, 1, 2],
+  [2026, 5, 15],
+] as const;
+
+for (const [year, month, day] of expectedBridges2026) {
+  const key = formatLocalDate(dateAtNoon(year, month, day));
+  const item = byKey2026.get(key);
+  assert.ok(item, `calendar list should include bridge day ${key}`);
+  assert.strictEqual(item?.kind, 'bridge', `${key} should have kind=bridge`);
+  assert.strictEqual(item?.name, 'Klämdag', `${key} should be named Klämdag`);
+}
+
+const expectedOtherNonWorkdays2026 = [
+  [2026, 6, 19, 'Midsommarafton'],
+  [2026, 12, 24, 'Julafton'],
+  [2026, 12, 31, 'Nyårsafton'],
+] as const;
+
+for (const [year, month, day, name] of expectedOtherNonWorkdays2026) {
+  const key = formatLocalDate(dateAtNoon(year, month, day));
+  const item = byKey2026.get(key);
+  assert.ok(item, `calendar list should include ${name}`);
+  assert.strictEqual(
+    item?.kind,
+    'otherNonWorkday',
+    `${name} should have kind=otherNonWorkday`,
+  );
+  assert.strictEqual(item?.name, name, `${name} should keep the expected name`);
 }
