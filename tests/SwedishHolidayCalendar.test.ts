@@ -298,7 +298,7 @@ const expectedHolidays2026 = [
   [2026, 4, 5, 'Påskdagen'],
   [2026, 4, 6, 'Annandag påsk'],
   [2026, 5, 1, 'Första maj'],
-  [2026, 5, 14, 'Kristi himmelsfärd'],
+  [2026, 5, 14, 'Kristi himmelsfärdsdag'],
   [2026, 5, 24, 'Pingstdagen'],
   [2026, 6, 6, 'Nationaldagen'],
   [2026, 6, 20, 'Midsommardagen'],

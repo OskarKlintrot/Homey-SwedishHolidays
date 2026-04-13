@@ -148,7 +148,7 @@ export default class SwedishHolidayCalendar {
     });
     helgdagList.push({
       date: this.addDays(paskdagen, 39),
-      name: 'Kristi himmelsfärd',
+      name: 'Kristi himmelsfärdsdag',
     });
     helgdagList.push({
       date: this.getPingstdagen(paskdagen),
