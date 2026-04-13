@@ -56,12 +56,14 @@
         margin-top: 12px;
         opacity: 0.8;
       }
+
+      header.homey-header {
+        margin-bottom: 0;
+      }
     </style>
   </head>
   <body>
     <header class="homey-header">
-      <h1 class="homey-title" data-i18n="settings.title"></h1>
-      <p class="homey-subtitle" data-i18n="settings.subtitle"></p>
       <p class="homey-subtitle holiday-year" id="year-line"></p>
     </header>
 
@@ -93,6 +95,14 @@
         return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0, 0);
       }
 
+      function capitalizeFirstLetter(value) {
+        if (!value) {
+          return value;
+        }
+
+        return value.charAt(0).toUpperCase() + value.slice(1);
+      }
+
       function renderHolidayRows(days, locale) {
         var body = document.getElementById("holiday-rows");
         body.innerHTML = "";
@@ -118,8 +128,8 @@
           dateCell.textContent = day.date;
 
           var weekdayCell = document.createElement("td");
-          weekdayCell.textContent = weekdayFormatter.format(
-            parseISODate(day.date),
+          weekdayCell.textContent = capitalizeFirstLetter(
+            weekdayFormatter.format(parseISODate(day.date)),
           );
 
           row.appendChild(holidayCell);

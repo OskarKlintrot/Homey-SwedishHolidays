@@ -1,7 +1,5 @@
 {
 	"settings": {
-		"title": "Swedish public holidays",
-		"subtitle": "Overview of official Swedish public holidays for the current year.",
 		"year": "Year",
 		"holiday": "Holiday",
 		"date": "Date",
