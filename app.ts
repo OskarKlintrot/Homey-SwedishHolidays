@@ -4,7 +4,10 @@ import Homey from 'homey';
 import SwedishHolidayCalendarModule = require('./lib/SwedishHolidayCalendar');
 
 type HolidayService = {
-  isPublicHoliday(date: Date, holidayName?: string): {
+  isPublicHoliday(
+    date: Date,
+    holidayName?: string,
+  ): {
     isPublicHoliday: boolean;
     holidayName?: string;
   };
@@ -38,11 +41,12 @@ const TOKEN_TITLES = {
   isPublicHoliday: 'Is Swedish public holiday',
 } as const;
 
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const FALLBACK_TIME_ZONE = 'Europe/Stockholm';
+const DATE_CHANGE_CHECK_INTERVAL_MS = 60 * 1000;
 
 module.exports = class MyApp extends Homey.App {
-  private midnightRefreshTimeout?: NodeJS.Timeout;
-  private midnightRefreshInterval?: NodeJS.Timeout;
+  private dateChangeInterval?: NodeJS.Timeout;
+  private lastEvaluatedDateKey?: string;
 
   /**
    * onInit is called when the app is initialized.
@@ -90,7 +94,7 @@ module.exports = class MyApp extends Homey.App {
       isPublicHolidayToken,
     };
 
-    this.scheduleMidnightTokenRefresh(holidayService, holidayNameToken, tokens);
+    this.scheduleDateChangeRefresh(holidayService, holidayNameToken, tokens);
 
     const isSwedishHolidayConditionCard = this.homey.flow.getConditionCard('is_swedish_holiday');
     isSwedishHolidayConditionCard.registerRunListener(
@@ -103,8 +107,8 @@ module.exports = class MyApp extends Homey.App {
           'during condition run',
         );
 
-        return holidayService
-          .isPublicHoliday(new Date(), args['holiday_name'])
+        const today = this.getTodayInConfiguredTimeZone();
+        return holidayService.isPublicHoliday(today, args['holiday_name'])
           .isPublicHoliday;
       },
     );
@@ -123,7 +127,8 @@ module.exports = class MyApp extends Homey.App {
           'during workday run',
         );
 
-        return holidayService.isWorkday(new Date(), includeBridgeDay);
+        const today = this.getTodayInConfiguredTimeZone();
+        return holidayService.isWorkday(today, includeBridgeDay);
       },
     );
 
@@ -131,12 +136,8 @@ module.exports = class MyApp extends Homey.App {
   }
 
   async onUninit() {
-    if (this.midnightRefreshTimeout) {
-      clearTimeout(this.midnightRefreshTimeout);
-    }
-
-    if (this.midnightRefreshInterval) {
-      clearInterval(this.midnightRefreshInterval);
+    if (this.dateChangeInterval) {
+      clearInterval(this.dateChangeInterval);
     }
   }
 
@@ -202,10 +203,7 @@ module.exports = class MyApp extends Homey.App {
       includeBridgeDay,
       holidayNameToken,
       tokens,
-    ).catch((error) => this.error(
-      `Failed to update status tokens ${contextLabel}`,
-      error,
-    ));
+    ).catch((error) => this.error(`Failed to update status tokens ${contextLabel}`, error));
   }
 
   private parseIncludeBridgeDayArg(value: string | undefined): boolean {
@@ -218,12 +216,12 @@ module.exports = class MyApp extends Homey.App {
     holidayNameToken: StringToken | undefined,
     tokens: StatusTokens,
   ) {
-    const now = new Date();
-    const holidayStatus = holidayService.isPublicHoliday(now);
+    const today = this.getTodayInConfiguredTimeZone();
+    const holidayStatus = holidayService.isPublicHoliday(today);
     const holidayName = holidayStatus.holidayName ?? '';
-    const isBridgeDay = holidayService.isKlamdag(now);
+    const isBridgeDay = holidayService.isKlamdag(today);
     const { isPublicHoliday } = holidayStatus;
-    const isWorkday = holidayService.isWorkday(now, includeBridgeDay);
+    const isWorkday = holidayService.isWorkday(today, includeBridgeDay);
 
     if (holidayNameToken) {
       await holidayNameToken.setValue(holidayName);
@@ -242,7 +240,7 @@ module.exports = class MyApp extends Homey.App {
     }
   }
 
-  private scheduleMidnightTokenRefresh(
+  private scheduleDateChangeRefresh(
     holidayService: HolidayService,
     holidayNameToken: StringToken | undefined,
     tokens: StatusTokens,
@@ -253,17 +251,14 @@ module.exports = class MyApp extends Homey.App {
         holidayNameToken,
         true,
         tokens,
-        'at midnight',
+        'at date change',
       );
     };
 
-    const msUntilNextMidnight = this.getMsUntilNextMidnight();
-    this.midnightRefreshTimeout = this.homey.setTimeout(() => {
-      this.runScheduledRefresh(refresh);
-      this.midnightRefreshInterval = this.homey.setInterval(() => {
-        this.runScheduledRefresh(refresh);
-      }, DAY_IN_MS);
-    }, msUntilNextMidnight);
+    this.lastEvaluatedDateKey = this.getDateKeyInConfiguredTimeZone();
+    this.dateChangeInterval = this.homey.setInterval(() => {
+      this.runScheduledRefreshIfDateChanged(refresh);
+    }, DATE_CHANGE_CHECK_INTERVAL_MS);
   }
 
   private runScheduledRefresh(refresh: () => Promise<void>) {
@@ -272,12 +267,64 @@ module.exports = class MyApp extends Homey.App {
     });
   }
 
-  private getMsUntilNextMidnight(): number {
-    const now = new Date();
-    const nextMidnight = new Date(now);
-    nextMidnight.setDate(now.getDate() + 1);
-    nextMidnight.setHours(0, 0, 0, 0);
-    return Math.max(1000, nextMidnight.getTime() - now.getTime());
+  private runScheduledRefreshIfDateChanged(refresh: () => Promise<void>) {
+    const currentDateKey = this.getDateKeyInConfiguredTimeZone();
+    if (currentDateKey === this.lastEvaluatedDateKey) {
+      return;
+    }
+
+    this.lastEvaluatedDateKey = currentDateKey;
+    this.runScheduledRefresh(refresh);
+  }
+
+  private getTodayInConfiguredTimeZone(now: Date = new Date()): Date {
+    const { year, month, day } = this.getDatePartsInConfiguredTimeZone(now);
+    // Noon local date avoids edge cases around DST transitions.
+    return new Date(year, month - 1, day, 12, 0, 0, 0);
+  }
+
+  private getDateKeyInConfiguredTimeZone(now: Date = new Date()): string {
+    const { year, month, day } = this.getDatePartsInConfiguredTimeZone(now);
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
+
+  private getDatePartsInConfiguredTimeZone(now: Date): {
+    year: number;
+    month: number;
+    day: number;
+  } {
+    const formatter = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: this.getConfiguredTimeZone(),
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const parts = formatter.formatToParts(now);
+
+    const year = Number(parts.find((part) => part.type === 'year')?.value);
+    const month = Number(parts.find((part) => part.type === 'month')?.value);
+    const day = Number(parts.find((part) => part.type === 'day')?.value);
+
+    if (
+      !Number.isFinite(year)
+      || !Number.isFinite(month)
+      || !Number.isFinite(day)
+    ) {
+      throw new Error(
+        'Failed to derive date parts from configured Homey timezone',
+      );
+    }
+
+    return { year, month, day };
+  }
+
+  private getConfiguredTimeZone(): string {
+    const timezone = this.homey.clock.getTimezone();
+    if (typeof timezone === 'string' && timezone.length > 0) {
+      return timezone;
+    }
+
+    return FALLBACK_TIME_ZONE;
   }
 
   private hasTokenError(error: unknown, tokenErrorCode: string): boolean {
