@@ -22,23 +22,26 @@ const SwedishHolidayCalendar = SwedishHolidayCalendarModule.default as {
 type StringToken = { setValue(value: string): Promise<unknown> };
 type BooleanToken = { setValue(value: boolean): Promise<unknown> };
 type StatusTokens = {
-  isWorkdayToken?: BooleanToken;
+  isWorkdayBridgeDaysOffToken?: BooleanToken;
+  isWorkdayBridgeDaysOnToken?: BooleanToken;
   isBridgeDayToken?: BooleanToken;
   isPublicHolidayToken?: BooleanToken;
 };
 
 const TOKEN_IDS = {
   holidayName: 'swedish_holiday_name',
-  isWorkday: 'swedish_is_workday',
+  isWorkdayBridgeDaysOff: 'swedish_is_workday',
+  isWorkdayBridgeDaysOn: 'swedish_is_workday_bridge_as_workday',
   isBridgeDay: 'swedish_is_bridge_day',
   isPublicHoliday: 'swedish_is_public_holiday',
 } as const;
 
 const TOKEN_TITLES = {
   holidayName: 'Swedish holiday name',
-  isWorkday: 'Is Swedish workday',
-  isBridgeDay: 'Is Swedish bridge day',
-  isPublicHoliday: 'Is Swedish public holiday',
+  isWorkdayBridgeDaysOff: 'Swedish workday',
+  isWorkdayBridgeDaysOn: 'Swedish workday or bridge day',
+  isBridgeDay: 'Swedish bridge day',
+  isPublicHoliday: 'Swedish public holiday',
 } as const;
 
 const FALLBACK_TIME_ZONE = 'Europe/Stockholm';
@@ -54,15 +57,20 @@ module.exports = class MyApp extends Homey.App {
   async onInit() {
     const holidayService = new SwedishHolidayCalendar();
     let holidayNameToken: StringToken | undefined;
-    let isWorkdayToken: BooleanToken | undefined;
+    let isWorkdayBridgeDaysOffToken: BooleanToken | undefined;
+    let isWorkdayBridgeDaysOnToken: BooleanToken | undefined;
     let isBridgeDayToken: BooleanToken | undefined;
     let isPublicHolidayToken: BooleanToken | undefined;
 
     try {
       holidayNameToken = await this.getOrCreateHolidayNameToken();
-      isWorkdayToken = await this.getOrCreateBooleanToken(
-        TOKEN_IDS.isWorkday,
-        TOKEN_TITLES.isWorkday,
+      isWorkdayBridgeDaysOffToken = await this.getOrCreateBooleanToken(
+        TOKEN_IDS.isWorkdayBridgeDaysOff,
+        TOKEN_TITLES.isWorkdayBridgeDaysOff,
+      );
+      isWorkdayBridgeDaysOnToken = await this.getOrCreateBooleanToken(
+        TOKEN_IDS.isWorkdayBridgeDaysOn,
+        TOKEN_TITLES.isWorkdayBridgeDaysOn,
       );
       isBridgeDayToken = await this.getOrCreateBooleanToken(
         TOKEN_IDS.isBridgeDay,
@@ -76,9 +84,9 @@ module.exports = class MyApp extends Homey.App {
       await this.refreshTodayTokens(
         holidayService,
         holidayNameToken,
-        true,
         {
-          isWorkdayToken,
+          isWorkdayBridgeDaysOffToken,
+          isWorkdayBridgeDaysOnToken,
           isBridgeDayToken,
           isPublicHolidayToken,
         },
@@ -89,7 +97,8 @@ module.exports = class MyApp extends Homey.App {
     }
 
     const tokens: StatusTokens = {
-      isWorkdayToken,
+      isWorkdayBridgeDaysOffToken,
+      isWorkdayBridgeDaysOnToken,
       isBridgeDayToken,
       isPublicHolidayToken,
     };
@@ -102,7 +111,6 @@ module.exports = class MyApp extends Homey.App {
         await this.refreshTodayTokens(
           holidayService,
           holidayNameToken,
-          true,
           tokens,
           'during condition run',
         );
@@ -122,7 +130,6 @@ module.exports = class MyApp extends Homey.App {
         await this.refreshTodayTokens(
           holidayService,
           holidayNameToken,
-          includeBridgeDay,
           tokens,
           'during workday run',
         );
@@ -194,13 +201,11 @@ module.exports = class MyApp extends Homey.App {
   private async refreshTodayTokens(
     holidayService: HolidayService,
     holidayNameToken: StringToken | undefined,
-    includeBridgeDay: boolean,
     tokens: StatusTokens,
     contextLabel: string,
   ) {
     await this.updateStatusTokens(
       holidayService,
-      includeBridgeDay,
       holidayNameToken,
       tokens,
     ).catch((error) => this.error(`Failed to update status tokens ${contextLabel}`, error));
@@ -212,7 +217,6 @@ module.exports = class MyApp extends Homey.App {
 
   private async updateStatusTokens(
     holidayService: HolidayService,
-    includeBridgeDay: boolean,
     holidayNameToken: StringToken | undefined,
     tokens: StatusTokens,
   ) {
@@ -221,7 +225,8 @@ module.exports = class MyApp extends Homey.App {
     const holidayName = holidayStatus.holidayName ?? '';
     const isBridgeDay = holidayService.isKlamdag(today);
     const { isPublicHoliday } = holidayStatus;
-    const isWorkday = holidayService.isWorkday(today, includeBridgeDay);
+    const isWorkdayBridgeDaysOff = holidayService.isWorkday(today, true);
+    const isWorkdayBridgeDaysOn = holidayService.isWorkday(today, false);
 
     if (holidayNameToken) {
       await holidayNameToken.setValue(holidayName);
@@ -235,8 +240,12 @@ module.exports = class MyApp extends Homey.App {
       await tokens.isPublicHolidayToken.setValue(isPublicHoliday);
     }
 
-    if (tokens.isWorkdayToken) {
-      await tokens.isWorkdayToken.setValue(isWorkday);
+    if (tokens.isWorkdayBridgeDaysOffToken) {
+      await tokens.isWorkdayBridgeDaysOffToken.setValue(isWorkdayBridgeDaysOff);
+    }
+
+    if (tokens.isWorkdayBridgeDaysOnToken) {
+      await tokens.isWorkdayBridgeDaysOnToken.setValue(isWorkdayBridgeDaysOn);
     }
   }
 
@@ -249,7 +258,6 @@ module.exports = class MyApp extends Homey.App {
       await this.refreshTodayTokens(
         holidayService,
         holidayNameToken,
-        true,
         tokens,
         'at date change',
       );
