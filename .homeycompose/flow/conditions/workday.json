@@ -4,8 +4,8 @@
     "sv": "Arbetsdag"
   },
   "titleFormatted": {
-    "en": "Is workday ([[include_bridge_day]] bridge days)",
-    "sv": "Är arbetsdag ([[include_bridge_day]] klämdagar)"
+    "en": "Is workday (bridge days [[include_bridge_day]] workdays)",
+    "sv": "Är arbetsdag (klämdagar [[include_bridge_day]] arbetsdagar)"
   },
   "hint": {
     "en": "True on weekdays that are not Swedish public holidays.",
@@ -18,12 +18,12 @@
       "required": false,
       "value": "true",
       "title": {
-        "en": "Bridge days",
-        "sv": "Klämdagar"
+        "en": "Count bridge days as workdays",
+        "sv": "Räkna klämdagar som arbetsdagar"
       },
       "values": [
-        { "id": "true", "title": { "en": "Including", "sv": "Inkludera" } },
-        { "id": "false", "title": { "en": "Excluding", "sv": "Exkludera" } }
+        { "id": "true", "title": { "en": "do not count as", "sv": "räknas inte som" } },
+        { "id": "false", "title": { "en": "count as", "sv": "räknas som" } }
       ]
     }
   ]
