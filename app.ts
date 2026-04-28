@@ -37,11 +37,11 @@ const TOKEN_IDS = {
 } as const;
 
 const TOKEN_TITLES = {
-  holidayName: 'Swedish holiday name',
-  isWorkdayBridgeDaysOff: 'Swedish workday',
-  isWorkdayBridgeDaysOn: 'Swedish workday or bridge day',
-  isBridgeDay: 'Swedish bridge day',
-  isPublicHoliday: 'Swedish public holiday',
+  holidayName: 'Svensk helgdag',
+  isWorkdayBridgeDaysOff: 'Svensk arbetsdag',
+  isWorkdayBridgeDaysOn: 'Svensk arbetsdag eller klämdag',
+  isBridgeDay: 'Svensk klämdag',
+  isPublicHoliday: 'Svensk röd dag',
 } as const;
 
 const FALLBACK_TIME_ZONE = 'Europe/Stockholm';
